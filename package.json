@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "build": "pkg main.js -t win -o main.exe",
+    "start": "node main.js"
+  },
+  "dependencies": {
+    "jimp": "^0.22.8",
+    "pkg": "^5.8.1",
+    "sharp": "^0.32.1"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "inputPath": "./input-images/",
+  "outputPath": "./output-images/",
+  "watermarkLogoFile": "./logo.png",
+  "images": {
+    "resizeSize": 2048,
+    "outputSize": 2048
+  },
+  "watermark": {
+    "opacity": 1
+  }
+}
