@@ -1,11 +1,11 @@
 {
   "scripts": {
-    "build": "pkg main.js -t win -o main.exe",
+    "build": "pkg main.js -t node20-win-x64 -o x.exe",
     "start": "node main.js"
   },
   "dependencies": {
+    "@yao-pkg/pkg": "^5.11.5",
     "jimp": "^0.22.8",
-    "pkg": "^5.8.1",
     "sharp": "^0.32.1"
   }
 }

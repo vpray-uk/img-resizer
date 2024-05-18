@@ -1,7 +1,16 @@
 const Jimp = require("jimp");
-const conf = require("./settings.json");
 const fs = require("fs");
 const path = require("path");
+
+const configPath = path.join(process.cwd(), "settings.json");
+let conf;
+try {
+  const data = fs.readFileSync(configPath, "utf8");
+  conf = JSON.parse(data);
+} catch (err) {
+  console.error("Error reading config file:", err);
+  process.exit(1);
+}
 
 function getCurrentDirectory() {
   return process.cwd();
@@ -71,7 +80,7 @@ for (let img of inputImages) {
   const outputSize = parseInt(conf.images.outputSize, 10);
 
   console.log("Working on " + img + " ..");
-  
+
   Jimp.read(inputFile, (err, inputImage) => {
     if (err) throw err;
 
