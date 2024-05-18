@@ -11,18 +11,24 @@ function combinePaths(...segments) {
   return path.join(...segments);
 }
 
-function directoryExists(path) {
+function directoryExists(directoryPath) {
   try {
-    fs.accessSync(combinePaths(getCurrentDirectory(), path), fs.constants.F_OK);
+    fs.accessSync(directoryPath, fs.constants.F_OK);
     return true;
   } catch (err) {
     return false;
   }
 }
 
-function fileExists(path) {
+function createDirectoryIfNotExists(directoryPath) {
+  if (!directoryExists(directoryPath)) {
+    fs.mkdirSync(directoryPath, { recursive: true });
+  }
+}
+
+function fileExists(filePath) {
   try {
-    fs.accessSync(path, fs.constants.F_OK);
+    fs.accessSync(filePath, fs.constants.F_OK);
     return true;
   } catch (err) {
     return false;
@@ -39,44 +45,33 @@ function getFileNamesFromDirectory(directoryPath) {
   }
 }
 
-if (!directoryExists(conf.inputPath)) {
-  console.error(
-    "input file directory not found: " +
-      combinePaths(getCurrentDirectory(), conf.inputPath)
-  );
+const inputPath = combinePaths(getCurrentDirectory(), conf.inputPath);
+const outputPath = combinePaths(getCurrentDirectory(), conf.outputPath);
+const logoFilePath = combinePaths(getCurrentDirectory(), conf.watermarkLogoFile);
+
+if (!directoryExists(inputPath)) {
+  console.error("Input file directory not found: " + inputPath);
   process.exit(1);
 }
 
-if (!directoryExists(conf.outputPath)) {
-  console.error(
-    "output file directory not found: " +
-      combinePaths(getCurrentDirectory(), conf.outputPath)
-  );
+createDirectoryIfNotExists(outputPath);
+
+if (!fileExists(logoFilePath)) {
+  console.error("Logo file not found: " + logoFilePath);
   process.exit(1);
 }
 
-if (!fileExists(combinePaths(getCurrentDirectory(), conf.watermarkLogoFile))) {
-  console.error(
-    "logo file not found: " +
-      combinePaths(getCurrentDirectory(), conf.watermarkLogoFile)
-  );
-  process.exit(1);
-}
+let inputImages = getFileNamesFromDirectory(inputPath);
 
-let inputImages = getFileNamesFromDirectory(
-  combinePaths(getCurrentDirectory(), conf.inputPath)
-);
-
-console.log("Input image found: " + inputImages.length);
+console.log("Input images found: " + inputImages.length);
 for (let img of inputImages) {
-  const inputFile = combinePaths(getCurrentDirectory(), conf.inputPath, img);
-  const outputFile = combinePaths(getCurrentDirectory(), conf.outputPath, img);
+  const inputFile = combinePaths(inputPath, img);
+  const outputFile = combinePaths(outputPath, img);
   const resizeSize = parseInt(conf.images.resizeSize, 10);
   const outputSize = parseInt(conf.images.outputSize, 10);
-  const logoFile = combinePaths(getCurrentDirectory(), conf.watermarkLogoFile);
 
   console.log("Working on " + img + " ..");
-  // Part 1: increaseCanvas.js
+  
   Jimp.read(inputFile, (err, inputImage) => {
     if (err) throw err;
 
@@ -90,7 +85,6 @@ for (let img of inputImages) {
     outputImage.write(outputFile, (err) => {
       if (err) throw err;
 
-      // Part 2: resize.js
       Jimp.read(outputFile, (err, resizedImage) => {
         if (err) throw err;
 
@@ -98,11 +92,10 @@ for (let img of inputImages) {
         resizedImage.write(outputFile, (err) => {
           if (err) throw err;
 
-          // Part 3: addlogo.js
           const main = async (a) => {
             const [image, logo] = await Promise.all([
               Jimp.read(a),
-              Jimp.read(logoFile),
+              Jimp.read(logoFilePath),
             ]);
 
             logo.resize(logo.bitmap.width, Jimp.AUTO);
