@@ -33,8 +33,13 @@ npm run build
 ```
 
 inputPath - the input folder that contains the images that need to be processed.
+
 outputPath - the output folder of the processed images.
+
 watermarkLogoFile - the watermark image path.
+
 images.resizeSize - the size of the image before stamping the watermark.
+
 images.outputSize - the final image size with the watermark stamped.
+
 watermark.opacity - how transparent the watermark should be.
