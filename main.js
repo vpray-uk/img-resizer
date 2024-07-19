@@ -74,6 +74,9 @@ let inputImages = getFileNamesFromDirectory(inputPath);
 
 console.log("Input images found: " + inputImages.length);
 for (let img of inputImages) {
+    if (img.endsWith('.ini')) {
+    continue; // Skip .ini files
+  }
   const inputFile = combinePaths(inputPath, img);
   const outputFile = combinePaths(outputPath, img);
   const resizeSize = parseInt(conf.images.resizeSize, 10);
