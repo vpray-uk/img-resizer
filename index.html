@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Resizer & Watermark</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 40px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 30px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            gap: 30px;
+        }
+
+        .settings-panel {
+            flex: 1;
+            min-width: 400px;
+        }
+
+        .preview-panel {
+            flex: 1;
+            min-width: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .form-row input[type="number"] {
+            flex: 1;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+            font-size: 16px;
+            padding: 15px 30px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .log-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .log-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .log-success {
+            color: #28a745;
+        }
+
+        .log-error {
+            color: #dc3545;
+        }
+
+        .slider {
+            width: 100%;
+            margin: 10px 0;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: #e1e5e9;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .slider-value {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 14px;
+        }
+
+        .preview-container {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .preview-info {
+            margin-top: 15px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .preview-placeholder {
+            color: #6c757d;
+            font-size: 16px;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .settings-panel, .preview-panel {
+                min-width: unset;
+            }
+            
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖼️ Image Resizer & Watermark</h1>
+            <p>Resize images and add watermarks with ease</p>
+        </div>
+        
+        <div class="content">
+            <div class="settings-panel">
+                <form id="settingsForm">
+                    <div class="form-group">
+                        <label>Input Folder:</label>
+                        <div class="form-row">
+                            <input type="text" id="inputPath" placeholder="Select folder containing images..." readonly>
+                            <button type="button" class="btn btn-secondary" onclick="selectInputFolder()">Browse</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Output Folder:</label>
+                        <div class="form-row">
+                            <input type="text" id="outputPath" placeholder="Select output folder..." readonly>
+                            <button type="button" class="btn btn-secondary" onclick="selectOutputFolder()">Browse</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Watermark Logo:</label>
+                        <div class="form-row">
+                            <input type="text" id="watermarkLogoFile" placeholder="Select watermark image..." readonly>
+                            <button type="button" class="btn btn-secondary" onclick="selectWatermarkFile()">Browse</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Resize Size: <span class="slider-value" id="resizeSizeValue">1024</span> pixels</label>
+                        <input type="range" id="resizeSize" class="slider" min="100" max="4000" step="50" value="1024">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Output Size: <span class="slider-value" id="outputSizeValue">800</span> pixels</label>
+                        <input type="range" id="outputSize" class="slider" min="100" max="4000" step="50" value="800">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Watermark Opacity: <span class="slider-value" id="opacityValue">0.7</span></label>
+                        <input type="range" id="watermarkOpacity" class="slider" min="0" max="1" step="0.1" value="0.7">
+                    </div>
+
+                    <button type="button" class="btn btn-success" id="processBtn" onclick="processImages()">
+                        🚀 Process Images
+                    </button>
+
+                    <div class="progress-container" id="progressContainer">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">Processing...</div>
+                    </div>
+
+                    <div class="log-container" id="logContainer">
+                        <h3>Processing Log:</h3>
+                        <div class="log-box" id="logBox"></div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="preview-panel">
+                <h3 style="margin-bottom: 20px; color: #333;">Live Preview</h3>
+                <div class="preview-container" id="previewContainer">
+                    <div class="preview-placeholder" id="previewPlaceholder">
+                        📷 Select input folder and watermark to see preview
+                    </div>
+                    <img id="previewImage" class="preview-image" style="display: none;">
+                    <div class="preview-info" id="previewInfo"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>

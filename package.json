@@ -1,11 +1,69 @@
 {
+  "name": "image-resizer-watermark",
+  "version": "1.0.0",
+  "description": "Image resizer and watermark application with GUI",
+  "main": "electron-main.js",
   "scripts": {
     "build": "pkg main.js -t node20-win-x64 -o x.exe",
-    "start": "node main.js"
+    "start": "node main.js",
+    "electron": "electron .",
+    "electron-dev": "electron . --dev",
+    "build-win": "electron-builder --win",
+    "build-mac": "electron-builder --mac",
+    "build-linux": "electron-builder --linux",
+    "build-all": "electron-builder --win --mac --linux",
+    "dist": "electron-builder"
   },
   "dependencies": {
     "@yao-pkg/pkg": "^5.11.5",
     "jimp": "^0.22.8",
     "sharp": "^0.32.1"
+  },
+  "devDependencies": {
+    "electron": "^36.4.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.imageresizer.app",
+    "productName": "Image Resizer & Watermark",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron-main.js",
+      "image-processor.js",
+      "index.html",
+      "renderer.js",
+      "logo.png",
+      "settings.json",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        }
+      ],
+      "icon": "logo.png"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "icon": "logo.png"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "logo.png"
+    }
   }
 }
