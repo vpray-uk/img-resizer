@@ -2,6 +2,10 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
+function getSettingsPath() {
+  return path.join(app.getPath('userData'), 'settings.json');
+}
+
 let mainWindow;
 
 function createWindow() {
@@ -63,19 +67,99 @@ ipcMain.handle('select-watermark-file', async () => {
   return result.filePaths[0];
 });
 
+ipcMain.handle('select-settings-file', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ['openFile'],
+    filters: [
+      { name: 'JSON Files', extensions: ['json'] }
+    ]
+  });
+  return result.filePaths[0];
+});
+
 ipcMain.handle('load-settings', async () => {
   try {
-    const settingsPath = path.join(__dirname, 'settings.json');
+    const settingsPath = getSettingsPath();
     const data = fs.readFileSync(settingsPath, 'utf8');
     return JSON.parse(data);
   } catch (error) {
+    // Try to load from backup if main file is corrupted
+    const backupSettings = tryLoadFromBackup(settingsPath);
+    if (backupSettings) {
+      console.log('Loaded settings from backup file');
+      return backupSettings;
+    }
     return null;
   }
 });
 
-ipcMain.handle('save-settings', async (event, settings) => {
+function tryLoadFromBackup(settingsPath) {
   try {
-    const settingsPath = path.join(__dirname, 'settings.json');
+    const backupPath = settingsPath + '.backup';
+    if (fs.existsSync(backupPath)) {
+      const data = fs.readFileSync(backupPath, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.warn('Failed to load from backup:', error.message);
+  }
+  return null;
+}
+
+ipcMain.handle('load-settings-from-path', async (event, settingsPath) => {
+  try {
+    const data = fs.readFileSync(settingsPath, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    // Try to load from backup if main file is corrupted
+    const backupSettings = tryLoadFromBackup(settingsPath);
+    if (backupSettings) {
+      console.log('Loaded settings from backup file');
+      return backupSettings;
+    }
+    return null;
+  }
+});
+
+function validateSettingsPath(settingsPath) {
+  try {
+    const dir = path.dirname(settingsPath);
+    fs.accessSync(dir, fs.constants.W_OK);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+function createBackup(settingsPath) {
+  try {
+    if (fs.existsSync(settingsPath)) {
+      const backupPath = settingsPath + '.backup';
+      fs.copyFileSync(settingsPath, backupPath);
+    }
+  } catch (error) {
+    console.warn('Failed to create backup:', error.message);
+  }
+}
+
+ipcMain.handle('save-settings', async (event, settings, customPath) => {
+  try {
+    const settingsPath = customPath || getSettingsPath();
+    
+    // Validate path is writable
+    if (!validateSettingsPath(settingsPath)) {
+      throw new Error('Settings path is not writable');
+    }
+    
+    // Create backup of existing settings
+    createBackup(settingsPath);
+    
+    // Ensure directory exists
+    const dir = path.dirname(settingsPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    
     fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
     return { success: true };
   } catch (error) {

@@ -34,31 +34,46 @@ async function loadSettings() {
     try {
         const settings = await ipcRenderer.invoke('load-settings');
         if (settings) {
-            document.getElementById('inputPath').value = settings.inputPath || '';
-            document.getElementById('outputPath').value = settings.outputPath || '';
-            document.getElementById('watermarkLogoFile').value = settings.watermarkLogoFile || '';
-            
-            if (settings.images) {
-                document.getElementById('resizeSize').value = settings.images.resizeSize || 1024;
-                document.getElementById('outputSize').value = settings.images.outputSize || 800;
-            }
-            
-            if (settings.watermark) {
-                const opacity = settings.watermark.opacity || 0.7;
-                document.getElementById('watermarkOpacity').value = opacity;
-                document.getElementById('opacityValue').textContent = opacity;
-            }
-            
-            // Update slider displays
-            document.getElementById('resizeSizeValue').textContent = document.getElementById('resizeSize').value;
-            document.getElementById('outputSizeValue').textContent = document.getElementById('outputSize').value;
-            
-            // Initial preview update
-            setTimeout(updatePreview, 100);
+            populateSettingsForm(settings);
         }
     } catch (error) {
         console.error('Error loading settings:', error);
     }
+}
+
+async function loadSettingsFromPath(settingsPath) {
+    try {
+        const settings = await ipcRenderer.invoke('load-settings-from-path', settingsPath);
+        if (settings) {
+            populateSettingsForm(settings);
+        }
+    } catch (error) {
+        console.error('Error loading settings from path:', error);
+    }
+}
+
+function populateSettingsForm(settings) {
+    document.getElementById('inputPath').value = settings.inputPath || '';
+    document.getElementById('outputPath').value = settings.outputPath || '';
+    document.getElementById('watermarkLogoFile').value = settings.watermarkLogoFile || '';
+    
+    if (settings.images) {
+        document.getElementById('resizeSize').value = settings.images.resizeSize || 1024;
+        document.getElementById('outputSize').value = settings.images.outputSize || 800;
+    }
+    
+    if (settings.watermark) {
+        const opacity = settings.watermark.opacity || 0.7;
+        document.getElementById('watermarkOpacity').value = opacity;
+        document.getElementById('opacityValue').textContent = opacity;
+    }
+    
+    // Update slider displays
+    document.getElementById('resizeSizeValue').textContent = document.getElementById('resizeSize').value;
+    document.getElementById('outputSizeValue').textContent = document.getElementById('outputSize').value;
+    
+    // Initial preview update
+    setTimeout(updatePreview, 100);
 }
 
 async function saveSettings() {
@@ -76,7 +91,8 @@ async function saveSettings() {
     };
 
     try {
-        const result = await ipcRenderer.invoke('save-settings', settings);
+        const customSettingsPath = document.getElementById('settingsPath').value;
+        const result = await ipcRenderer.invoke('save-settings', settings, customSettingsPath);
         if (!result.success) {
             throw new Error(result.error);
         }
@@ -119,6 +135,19 @@ async function selectWatermarkFile() {
         }
     } catch (error) {
         console.error('Error selecting watermark file:', error);
+    }
+}
+
+async function selectSettingsFile() {
+    try {
+        const filePath = await ipcRenderer.invoke('select-settings-file');
+        if (filePath) {
+            document.getElementById('settingsPath').value = filePath;
+            // Load settings from the selected file
+            await loadSettingsFromPath(filePath);
+        }
+    } catch (error) {
+        console.error('Error selecting settings file:', error);
     }
 }
 

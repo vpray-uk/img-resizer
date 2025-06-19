@@ -2,14 +2,37 @@ const Jimp = require("jimp");
 const fs = require("fs");
 const path = require("path");
 
-const configPath = path.join(process.cwd(), "settings.json");
+const customConfigPath = process.argv.find(arg => arg.startsWith('--config='));
+const configPath = customConfigPath ? customConfigPath.split('=')[1] : path.join(process.cwd(), "settings.json");
+const defaultSettings = {
+  inputPath: "input",
+  outputPath: "output", 
+  watermarkLogoFile: "logo.png",
+  images: {
+    resizeSize: "1000",
+    outputSize: "800"
+  },
+  watermark: {
+    opacity: 0.5
+  }
+};
+
 let conf;
 try {
   const data = fs.readFileSync(configPath, "utf8");
   conf = JSON.parse(data);
+  // Ensure all required properties exist
+  conf = { ...defaultSettings, ...conf };
+  if (conf.images) {
+    conf.images = { ...defaultSettings.images, ...conf.images };
+  }
+  if (conf.watermark) {
+    conf.watermark = { ...defaultSettings.watermark, ...conf.watermark };
+  }
 } catch (err) {
   console.error("Error reading config file:", err);
-  process.exit(1);
+  console.error("Continuing with default settings...");
+  conf = defaultSettings;
 }
 
 function getCurrentDirectory() {
